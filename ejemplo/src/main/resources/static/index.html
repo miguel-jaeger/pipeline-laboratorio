@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Saludo - GitHub Pages</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+    <div class="bg-white p-8 md:p-10 rounded-xl shadow-2xl w-full max-w-md">
+        <h1 class="text-3xl font-bold text-gray-800 mb-6 text-center">
+            Saludo Interactivo
+        </h1>
+        <p class="text-sm text-center text-gray-500 mb-8">
+            Este Frontend (alojado en GitHub Pages) se conecta a tu Backend de Spring Boot corriendo localmente (a través del túnel de VS Code).
+        </p>
+
+        <form id="saludoForm" class="space-y-6">
+            <div class="space-y-2">
+                <label for="nombreInput" class="block text-sm font-medium text-gray-700">
+                    Ingresa tu nombre
+                </label>
+                <input type="text" id="nombreInput" required 
+                       placeholder="Escribe tu nombre aquí"
+                       class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition duration-150">
+            </div>
+            
+            <button type="submit" 
+                    class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-lg text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-200 transform hover:scale-[1.01] active:scale-[0.99]">
+                Enviar Nombre al Backend
+            </button>
+        </form>
+
+        <div id="resultado" class="mt-8 p-4 rounded-lg border-l-4 border-indigo-500 bg-indigo-50 text-gray-800">
+            <p class="font-semibold text-sm">Estado:</p>
+            <p id="saludo-mensaje" class="mt-1 text-lg">Esperando tu nombre...</p>
+        </div>
+    </div>
+
+    <script>
+        // **!!! CONFIGURACIÓN CRÍTICA !!!**
+        // REEMPLAZA esta URL base con la URL pública generada por VS Code (ej: https://famous-tunnel-4567.loca.lt)
+        const BACKEND_URL_BASE = "https://famous-tunnel-4567.loca.lt";
+        const form = document.getElementById('saludoForm');
+        const nombreInput = document.getElementById('nombreInput');
+        const mensajeElement = document.getElementById('saludo-mensaje');
+        const resultadoDiv = document.getElementById('resultado');
+
+        form.addEventListener('submit', obtenerSaludo);
+
+        /**
+         * Maneja el envío del formulario, llama al backend de Spring Boot y muestra la respuesta.
+         */
+        async function obtenerSaludo(event) {
+            event.preventDefault(); // Detiene el envío estándar del formulario
+
+            const nombre = nombreInput.value;
+            // Codifica el nombre para que funcione correctamente en la URL (ej: "Juan Pérez" -> "Juan%20P%C3%A9rez")
+            const nombreCodificado = encodeURIComponent(nombre); 
+
+            // Construye la URL completa con el endpoint del API y el parámetro 'nombre'
+            const ENDPOINT_FINAL = `${BACKEND_URL_BASE}/api/saludo?nombre=${nombreCodificado}`;
+
+            mensajeElement.innerText = 'Conectando con el Backend...';
+            resultadoDiv.classList.remove('border-red-500', 'bg-red-50');
+            resultadoDiv.classList.add('border-indigo-500', 'bg-indigo-50');
+
+
+            try {
+                // Realiza la petición GET al Spring Boot local expuesto
+                const response = await fetch(ENDPOINT_FINAL, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'text/plain' // Esperamos una respuesta de texto simple
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Error HTTP ${response.status}: El servidor de Spring Boot respondió con un error.`);
+                }
+                
+                const data = await response.text();
+                mensajeElement.innerText = data;
+                resultadoDiv.classList.add('border-green-500', 'bg-green-50');
+
+            } catch (error) {
+                console.error('Error al obtener el saludo:', error);
+                mensajeElement.innerText = `ERROR: ${error.message}. Asegúrate de que el backend (Spring Boot) está corriendo y el túnel de VS Code está activo.`;
+                resultadoDiv.classList.remove('border-indigo-500', 'bg-indigo-50');
+                resultadoDiv.classList.add('border-red-500', 'bg-red-50');
+            }
+        }
+    </script>
+</body>
+</html>
